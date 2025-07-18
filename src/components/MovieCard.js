@@ -1,14 +1,20 @@
-// src/components/MovieCard.js (create this new file and folder)
 import React from 'react';
-import './MovieCard.css'; // We'll add this later
+import './MovieCard.css';
+import { Link } from 'react-router-dom'; // NEW: Import Link
 
-function MovieCard(props) { // props is an object containing all passed props
+function MovieCard(props) {
+  // Destructure 'id' from props.movie for the link
+  const { id, title, imageUrl, releaseDate } = props.movie; // Adjusted to destructure props.movie
+
   return (
-    <div className="movie-card">
-      <h2>{props.title}</h2>
-      <img src={props.imageUrl} alt={props.title} />
-      <p>{props.releaseDate}</p>
-    </div>
+    // NEW: Wrap the movie card with a Link component
+    <Link to={`/movie/${id}`} className="movie-card-link"> {/* Link to the movie detail page */}
+      <div className="movie-card">
+        <h2>{title}</h2>
+        <img src={imageUrl} alt={title} />
+        <p>{releaseDate}</p>
+      </div>
+    </Link>
   );
 }
 

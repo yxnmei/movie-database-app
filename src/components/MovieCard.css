@@ -24,3 +24,12 @@
   font-size: 0.9em;
   color: #666;
 }
+.movie-card-link {
+  text-decoration: none; 
+  color: inherit; 
+}
+
+.movie-card-link:hover .movie-card { 
+  transform: translateY(-5px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}

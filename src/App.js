@@ -1,20 +1,23 @@
-import React, { useState, useEffect, useCallback } from 'react'; // Import useCallback
+import React, { useState, useEffect, useCallback } from 'react';
+import { Routes, Route } from 'react-router-dom'; // NEW: Import Routes and Route
 import './App.css';
 import MovieCard from './components/MovieCard';
-import SearchBar from './components/SearchBar'; // Import SearchBar
+import SearchBar from './components/SearchBar';
+// import PaginationControls from './components/PaginationControls'; // Will add dedicated component later
+import MovieDetailPage from './pages/MovieDetailPage'; // NEW: Import the actual MovieDetailPage
 
 const IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500';
 const TMDB_API_KEY = process.env.REACT_APP_TMDB_API_KEY;
 
 function App() {
   const [movies, setMovies] = useState([]);
-  const [loading, setLoading] = useState(false); // Start as false initially, only load on search or first popular fetch
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [currentSearchTerm, setCurrentSearchTerm] = useState(''); // New state for search term
+  const [currentSearchTerm, setCurrentSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
-  // Memoize the fetch function using useCallback to prevent unnecessary re-creations
-  // and ensure it doesn't cause issues with useEffect dependencies
-  const fetchMovies = useCallback(async (term = '') => {
+  const fetchMovies = useCallback(async (term = '', page = 1) => {
     setLoading(true);
     setError(null);
     let url = '';
@@ -26,11 +29,9 @@ function App() {
     }
 
     if (term) {
-      // Search endpoint
-      url = `https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&language=en-US&query=${encodeURIComponent(term)}&page=1&include_adult=false`;
+      url = `https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&language=en-US&query=${encodeURIComponent(term)}&page=${page}&include_adult=false`;
     } else {
-      // Popular movies endpoint if no search term
-      url = `https://api.themoviedb.org/3/movie/popular?api_key=${TMDB_API_KEY}&language=en-US&page=1`;
+      url = `https://api.themoviedb.org/3/movie/popular?api_key=${TMDB_API_KEY}&language=en-US&page=${page}`;
     }
 
     try {
@@ -42,52 +43,77 @@ function App() {
       setMovies(data.results.map(movie => ({
         id: movie.id,
         title: movie.title,
-        imageUrl: movie.poster_path ? `${IMAGE_BASE_URL}${movie.poster_path}` : 'https://via.placeholder.com/200x300?text=No+Image', // Placeholder for missing images
+        imageUrl: movie.poster_path ? `${IMAGE_BASE_URL}${movie.poster_path}` : 'https://via.placeholder.com/200x300?text=No+Image',
         releaseDate: movie.release_date
       })));
+      setTotalPages(data.total_pages);
+      setCurrentPage(data.page);
+
     } catch (err) {
       console.error("Error fetching movies:", err);
       setError("Failed to fetch movies. Please try again.");
     } finally {
       setLoading(false);
     }
-  }, []); // Only recreate fetchMovies if API key changes
+  }, []);
 
-  // Initial load of popular movies
   useEffect(() => {
-    fetchMovies(); // Call without a term to get popular movies
-  }, [fetchMovies]); // Dependency: fetchMovies itself (due to useCallback)
+    fetchMovies('', 1);
+  }, [fetchMovies]);
 
   const handleSearch = (term) => {
     setCurrentSearchTerm(term);
-    fetchMovies(term); // Call fetchMovies with the new search term
+    setCurrentPage(1);
+    fetchMovies(term, 1);
+    window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll to top on search
   };
 
-  if (loading) {
-    return <div className="App">Loading movies...</div>;
-  }
+  const handleNextPage = () => {
+    const nextPage = currentPage + 1;
+    setCurrentPage(nextPage);
+    fetchMovies(currentSearchTerm, nextPage);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
-  if (error) {
-    return <div className="App" style={{ color: 'red' }}>Error: {error}</div>;
-  }
+  const handlePrevPage = () => {
+    const prevPage = currentPage - 1;
+    setCurrentPage(prevPage);
+    fetchMovies(currentSearchTerm, prevPage);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   return (
     <div className="App">
       <h1>My Movie Database</h1>
-      <SearchBar onSearch={handleSearch} /> {/* Pass the handleSearch function as a prop */}
-      {movies.length === 0 && !loading && !error && currentSearchTerm && (
-        <p>No results found for "{currentSearchTerm}".</p>
-      )}
-      <div className="movie-list">
-        {movies.map(movie => (
-          <MovieCard
-            key={movie.id}
-            title={movie.title}
-            imageUrl={movie.imageUrl}
-            releaseDate={movie.releaseDate}
-          />
-        ))}
-      </div>
+      <SearchBar onSearch={handleSearch} />
+
+      {/* NEW: Routes will manage what is rendered based on the URL */}
+      <Routes>
+        <Route path="/" element={ // The main route for home/search page
+          <> {/* React Fragment to return multiple elements */}
+            {movies.length === 0 && !loading && !error && currentSearchTerm && (
+              <p>No results found for "{currentSearchTerm}".</p>
+            )}
+            <div className="movie-list">
+              {movies.map(movie => (
+                <MovieCard
+                  key={movie.id}
+                  movie={movie} // <<< Pass the entire movie object as a prop
+                />
+              ))}
+            </div>
+            {totalPages > 1 && (
+              <div className="pagination-controls">
+                <button onClick={handlePrevPage} disabled={currentPage === 1}>Previous</button>
+                <span>Page {currentPage} of {totalPages}</span>
+                <button onClick={handleNextPage} disabled={currentPage === totalPages}>Next</button>
+              </div>
+            )}
+          </>
+        } />
+        {/* NEW: Route for individual movie details. :id is a URL parameter */}
+        <Route path="/movie/:id" element={<MovieDetailPage />} />
+      </Routes>
     </div>
   );
 }
