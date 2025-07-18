@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom'; // NEW: Import useParams
+import { useParams, Link } from 'react-router-dom'; // <--- ADD Link HERE
 import './MovieDetailPage.css'; // NEW: Create this CSS file
 
 const TMDB_API_KEY = process.env.REACT_APP_TMDB_API_KEY;
@@ -108,6 +108,13 @@ function MovieDetailPage() {
       )}
 
       <div className="movie-detail-content">
+        {/* NEW: Back to Home Button */}
+        <div className="back-button-container">
+            <Link to="/" className="back-button">
+                &larr; Back to Home
+            </Link>
+        </div>
+        
         <div className="poster-section">
           {poster_path ? (
             <img src={`${IMAGE_BASE_URL}${poster_path}`} alt={`${title} poster`} className="movie-poster" />

@@ -110,6 +110,28 @@
   background-color: #a60710;
 }
 
+.back-button-container {
+  width: 100%; /* Spans full width */
+  margin-bottom: 20px;
+  text-align: left; /* Align button to left */
+}
+
+.back-button {
+  display: inline-block;
+  padding: 10px 15px;
+  background-color: #6c757d; /* A greyish color */
+  color: white;
+  text-decoration: none;
+  border-radius: 5px;
+  font-size: 1em;
+  transition: background-color 0.2s ease;
+  margin-top: 10px; /* Some space from top */
+}
+
+.back-button:hover {
+  background-color: #5a6268;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .movie-detail-content {

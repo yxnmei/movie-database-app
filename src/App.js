@@ -61,13 +61,20 @@ function App() {
     fetchMovies('', 1);
   }, [fetchMovies]);
 
-  const handleSearch = (term) => {
-    setCurrentSearchTerm(term);
-    setCurrentPage(1);
-    fetchMovies(term, 1);
-    window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll to top on search
-  };
+ const handleSearch = (term) => {
+  setCurrentSearchTerm(term); // Keep track of the current search term
 
+  // Reset page to 1 for any search or clear action
+  setCurrentPage(1);
+
+  if (term.trim() === '') { // Check if the term is empty or just whitespace
+    fetchMovies('', 1); // Fetch popular movies (empty term means popular)
+  } else {
+    fetchMovies(term, 1); // Fetch movies for the given search term
+  }
+
+  window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll to top
+};
   const handleNextPage = () => {
     const nextPage = currentPage + 1;
     setCurrentPage(nextPage);
